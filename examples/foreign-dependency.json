@@ -1,0 +1,40 @@
+{
+  "service": "checkout",
+  "now": 100,
+  "window": 3,
+  "traffic": [
+    {
+      "service": "checkout",
+      "minute": 98,
+      "requests": 300,
+      "errors": 12
+    },
+    {
+      "service": "checkout",
+      "minute": 99,
+      "requests": 300,
+      "errors": 12
+    },
+    {
+      "service": "checkout",
+      "minute": 100,
+      "requests": 300,
+      "errors": 12
+    }
+  ],
+  "changes": [
+    {
+      "service": "checkout",
+      "minute": 98,
+      "id": "deploy-v4"
+    }
+  ],
+  "dependencies": [
+    {
+      "service": "catalog",
+      "minute": 99,
+      "dependency": "payments",
+      "p95_ms": 910
+    }
+  ]
+}

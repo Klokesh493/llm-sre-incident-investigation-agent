@@ -1,0 +1,73 @@
+[
+  {
+    "name": "primary",
+    "input": "main.json",
+    "actions": [
+      "slo",
+      "timeline",
+      "dependencies"
+    ],
+    "expected": "page_candidate",
+    "citations": [
+      "dependencies",
+      "slo",
+      "timeline"
+    ]
+  },
+  {
+    "name": "healthy",
+    "input": "healthy.json",
+    "actions": [
+      "dependencies",
+      "timeline",
+      "slo"
+    ],
+    "expected": "observe",
+    "citations": [
+      "dependencies",
+      "slo",
+      "timeline"
+    ]
+  },
+  {
+    "name": "missing-minute",
+    "input": "missing-minute.json",
+    "actions": [
+      "dependencies",
+      "timeline",
+      "slo"
+    ],
+    "expected": "review",
+    "citations": [
+      "dependencies",
+      "slo",
+      "timeline"
+    ]
+  },
+  {
+    "name": "foreign-dependency",
+    "input": "foreign-dependency.json",
+    "actions": [
+      "dependencies",
+      "timeline",
+      "slo"
+    ],
+    "expected": "review",
+    "citations": [
+      "dependencies",
+      "slo",
+      "timeline"
+    ]
+  },
+  {
+    "name": "missing-evidence-budget",
+    "input": "main.json",
+    "actions": [
+      "shell"
+    ],
+    "expected": "review",
+    "budget": 1,
+    "stop": "budget_exhausted",
+    "citations": []
+  }
+]

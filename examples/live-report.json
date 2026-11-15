@@ -1,0 +1,79 @@
+{
+  "citations": [
+    "dependencies",
+    "slo",
+    "timeline"
+  ],
+  "decision": "page_candidate",
+  "evidence": {
+    "coverage": {
+      "data": {
+        "minutes": 3,
+        "service": "checkout"
+      },
+      "id": "coverage",
+      "sha256": "695ea7a145c8af2b8b2e95e3ab045188dce40b6f267b712581b285328deba38c"
+    },
+    "dependencies": {
+      "data": {
+        "degraded": [
+          "payments"
+        ],
+        "observed": 1
+      },
+      "id": "dependencies",
+      "sha256": "fcbd23da5c35261b41a1f53ed7c9b90f37f1e1392544373892525cfbe7f5abce"
+    },
+    "slo": {
+      "data": {
+        "breach": true,
+        "buckets": 3,
+        "errors": 36,
+        "expected_buckets": 3,
+        "latest": 100,
+        "requests": 900
+      },
+      "id": "slo",
+      "sha256": "0b2d74760ffb3e364dedd038610bcfd56e0e523555a6e7bb8067615b1f990cb7"
+    },
+    "timeline": {
+      "data": {
+        "changes": [
+          {
+            "id": "deploy-v4",
+            "minute": 98
+          }
+        ]
+      },
+      "id": "timeline",
+      "sha256": "d5e74e08a61b7ce61e274c197f9f5ba9988ab5aab4f0c7cf12c853b2bea85aac"
+    }
+  },
+  "missing": [],
+  "model": "qwen2.5:0.5b",
+  "planner": "ollama",
+  "reason": "error ratio crossed 2%; investigate recent changes and high dependency latency",
+  "stop": "evidence_complete",
+  "trace": [
+    {
+      "event": "observed",
+      "source": "timeline",
+      "step": 1
+    },
+    {
+      "event": "observed",
+      "source": "slo",
+      "step": 2
+    },
+    {
+      "event": "observed",
+      "source": "coverage",
+      "step": 3
+    },
+    {
+      "event": "observed",
+      "source": "dependencies",
+      "step": 4
+    }
+  ]
+}

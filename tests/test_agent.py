@@ -1,0 +1,54 @@
+import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import unittest
+from unittest.mock import Mock
+
+from agent import evaluate, run
+from domain import REQUIRED
+from loop import Ollama, Replay, bounded_json
+
+ROOT = Path(__file__).resolve().parents[1]
+SAMPLE = ROOT / "examples/main.json"
+
+
+class AgentTest(unittest.TestCase):
+    def test_evaluation_suite(self):
+        result = evaluate(ROOT / "examples/eval.json")
+        self.assertGreaterEqual(result["total"], 4)
+        self.assertEqual(result["passed"], result["total"], result["cases"])
+
+    def test_loop_rejects_unknown_and_duplicate_actions(self):
+        first, *rest = sorted(REQUIRED)
+        report = run(SAMPLE, Replay(["shell", first, first, *rest]), 7)
+        self.assertEqual(report["stop"], "evidence_complete")
+        self.assertEqual([x["event"] for x in report["trace"]].count("rejected_action"), 2)
+        self.assertEqual(set(report["evidence"]), REQUIRED)
+
+    def test_missing_evidence_is_review(self):
+        report = run(SAMPLE, Replay([]))
+        self.assertEqual((report["decision"], report["stop"]), ("review", "model_error"))
+        self.assertEqual(set(report["missing"]), REQUIRED)
+
+    def test_ollama_contract_forbids_arbitrary_tool_arguments(self):
+        model = Ollama("test-model")
+        response = Mock()
+        response.__enter__ = Mock(return_value=response)
+        response.__exit__ = Mock()
+        response.read.return_value = json.dumps({"message": {"content": '{"action":"probe"}'}}).encode()
+        model.client = Mock()
+        model.client.open.return_value = response
+        self.assertEqual(model.choose("task", {"probe": "read local evidence"}, {}, 2), "probe")
+        request = model.client.open.call_args.args[0]
+        options = json.loads(request.data)
+        self.assertEqual(request.full_url, "http://127.0.0.1:11434/api/chat")
+        self.assertEqual(options["format"]["properties"]["action"]["enum"], ["probe"])
+        self.assertFalse(options["format"]["additionalProperties"])
+
+    def test_input_size_and_non_finite_constants(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "fixture.json"
+            for value in (" " * 131_073, '{"samples":[NaN]}'):
+                path.write_text(value, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    bounded_json(path)
