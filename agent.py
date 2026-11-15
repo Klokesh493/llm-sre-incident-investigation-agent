@@ -43,6 +43,7 @@ def main():
     mode.add_argument("--model")
     mode.add_argument("--replay", type=Path)
     inspect.add_argument("--port", type=int, choices=range(1, 65536), metavar="PORT", default=11434)
+    inspect.add_argument("--require-decision", help="exit 1 unless the complete run returns this decision")
     inspect.add_argument("--budget", type=int, choices=range(1, 9), default=4)
     suite = commands.add_parser("evaluate")
     suite.add_argument("suite", type=Path, nargs="?", default=Path("examples/eval.json"))
@@ -51,7 +52,9 @@ def main():
         if args.command == "run":
             planner = Ollama(args.model, args.port) if args.model else Replay(bounded_json(args.replay))
             result = run(args.case, planner, args.budget)
-            status = 1 if result["stop"] != "evidence_complete" else 0
+            complete = result["stop"] == "evidence_complete"
+            meets_policy = args.require_decision is None or result["decision"] == args.require_decision
+            status = 0 if complete and meets_policy else 1
         else:
             result = evaluate(args.suite)
             status = 0 if result["passed"] == result["total"] else 1

@@ -21,14 +21,27 @@ class Probe:
     collect: object
 
 
+def strict_json(data):
+    def unique_object(items):
+        result = {}
+        for key, value in items:
+            if key in result:
+                raise ValueError("JSON contains a duplicate key")
+            result[key] = value
+        return result
+
+    def reject_constant(token):
+        raise ValueError(f"JSON numeric constant is invalid: {token}")
+
+    return json.loads(data, object_pairs_hook=unique_object, parse_constant=reject_constant)
+
+
 def bounded_json(path):
     with Path(path).open("rb") as source:
         data = source.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:
         raise ValueError("input exceeds 128 KiB")
-    def reject_constant(token):
-        raise ValueError(f"JSON numeric constant is invalid: {token}")
-    return json.loads(data, parse_constant=reject_constant)
+    return strict_json(data)
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -71,7 +84,7 @@ class Ollama:
                 raw = response.read(MAX_BYTES + 1)
             if len(raw) > MAX_BYTES:
                 raise ValueError("response exceeds 128 KiB")
-            value = json.loads(json.loads(raw)["message"]["content"])
+            value = strict_json(strict_json(raw)["message"]["content"])
         except (OSError, ValueError, KeyError, TypeError) as exc:
             raise ModelError("local model response unavailable or invalid") from exc
         if not isinstance(value, dict) or set(value) != {"action"}:

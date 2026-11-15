@@ -2,6 +2,8 @@
 
 Investigate a checkout incident from request buckets, deployment changes, and dependency latency.
 
+[Skills and verification](docs/ENGINEERING_NOTES.md)
+
 ## What I built
 
 On-call triage needs to distinguish a measured breach from a gap in collection. This agent reconstructs evidence for one service and incident window.
@@ -47,6 +49,14 @@ Local Qwen2.5 0.5B through Ollama v0.40.16 selected `timeline → slo → covera
 `make verify` runs the test suite and then compares each replay case’s decision, stop reason and citations against its expected outputs. For automated execution, use the [CI template](docs/github-actions/ci.yml).
 
 The model also ran the `missing-minute` fixture and returned `review`.
+
+To verify the decision in a local pipeline, run:
+
+```sh
+python3 agent.py run examples/main.json --replay examples/actions.json --require-decision page_candidate
+```
+
+A mismatched decision exits 1 and keeps the JSON report on stdout. Duplicate JSON keys exit 2 for fixtures and are rejected in the local model response.
 
 ## Operating limits
 

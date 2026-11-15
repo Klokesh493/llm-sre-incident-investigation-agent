@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -48,7 +50,17 @@ class AgentTest(unittest.TestCase):
     def test_input_size_and_non_finite_constants(self):
         with TemporaryDirectory() as directory:
             path = Path(directory) / "fixture.json"
-            for value in (" " * 131_073, '{"samples":[NaN]}'):
+            for value in (" " * 131_073, '{"samples":[NaN]}', '{"case":1,"case":2}'):
                 path.write_text(value, encoding="utf-8")
                 with self.assertRaises(ValueError):
                     bounded_json(path)
+
+    def test_cli_required_decision_exposes_policy_failure(self):
+        expected = json.loads((ROOT / "examples/eval.json").read_text())[0]["expected"]
+        command = [sys.executable, "-B", "agent.py", "run", "examples/main.json",
+                   "--replay", "examples/actions.json", "--require-decision"]
+        for required, code in [(expected, 0), ("unexpected_decision", 1)]:
+            with self.subTest(required=required):
+                result = subprocess.run(command + [required], cwd=ROOT, capture_output=True, text=True, check=False)
+                self.assertEqual(result.returncode, code, result.stderr)
+                self.assertEqual(json.loads(result.stdout)["decision"], expected)
